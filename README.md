@@ -25,7 +25,9 @@ Generates output suitable for Exec plugin of collectd.
     </Plugin>
 
 * Ubuntu 12.04 LTS
-* A specific drivedb.h file in /usr/local/share/smartmontools 
+* A specific smart_drivedb.h file in /etc/smart_drivedb.h with only specifics to
+your drive. This repository for example contains missing statement for Intel
+DC series SSD not present in smartmontools 5.4.
 
 ## Parameters:
 
