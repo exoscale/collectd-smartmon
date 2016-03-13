@@ -37,6 +37,11 @@ while true; do
 		fi
 
 		eval `sudo /usr/sbin/smartctl -n standby $drv -A "/dev/$dsk" | awk '$3 ~ /^0x/ && $2 ~ /^[a-zA-Z0-9_-]+$/ { gsub(/-/, "_"); print "SMART_" $2 "=" $10 }' 2>/dev/null`
+                
+                # Health status: 8 bits mask, read smartctl for meaning, anything > 0 is bad
+                echo "PUTVAL $HOST/smart$adp-$dsk/$id/gauge-health-status interval=$INTERVAL N:$?"
+                
+                # Generic values
 		[ -n "$SMART_Current_Pending_Sector" ] &&
 			echo "PUTVAL $HOST/smart$adp-$dsk/$id/gauge-current_pending_sector interval=$INTERVAL N:${SMART_Current_Pending_Sector:-U}"
 		[ -n "$SMART_End_to_End_Error" ] &&
