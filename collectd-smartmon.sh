@@ -6,26 +6,35 @@
 # SOURCE: http://devel.dob.sk/collectd-scripts/
 ###
 
-if [ -z "$*" ]; then
+if [ -e /dev/megaraid_sas_ioctl_node ]; then
+	targetId=0
+	dev=`ls -l /dev/disk/by-path/ | grep -E "scsi-[0-9]:[0-9]:${targetId}:[0-9] " | awk '{print($11)}'`; echo ${dev##*\/}
+	device=${dev##*\/}
+	for id in `sudo megacli -PDList -aALL|grep 'Device Id:'|awk '{print $3}'`;do 
+		megaraid="$megaraid $device:megaraid,$id"  
+	done
+else
 	echo "Usage: $(basename $0) <disk> <disk>..." >&2
 	exit 1
 fi
 
 for disk in "$@"; do
+	alldisks="$alldisks $disk"
 	disk=${disk%:*}
 	if ! [ -e "/dev/$disk" ]; then
 		echo "$(basename $0): disk /dev/$disk not found !" >&2
 		exit 1
 	fi
 done
+alldisks="$alldisks$megaraid"
 
 HOST=`hostname`
 INTERVAL=300
 while true; do
-	for disk in "$@"; do
+	for disk in $alldisks; do
 		dsk=${disk%:*}
 		drv=${disk#*:}
-		id=
+		id="0"
 		adp=
 
 		if [ "$disk" != "$drv" ]; then
@@ -35,7 +44,6 @@ while true; do
 		else
 			drv=
 		fi
-
 		eval `sudo /usr/sbin/smartctl -n standby $drv -A "/dev/$dsk" | awk '$3 ~ /^0x/ && $2 ~ /^[a-zA-Z0-9_-]+$/ { gsub(/-/, "_"); print "SMART_" $2 "=" $10 }' 2>/dev/null`
                 
                 # Health status: 8 bits mask, read smartctl for meaning, anything > 0 is bad
